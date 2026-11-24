@@ -75,6 +75,17 @@ def test_history_is_well_formed():
     assert res.matches["p_true"].between(0, 1).all()
 
 
+def test_observable_match_metrics_are_reported():
+    res = run_simulation(Elo(), SMALL, record_matches=True)
+    assert res.matches is not None
+    for metric in ("prediction_log_loss", "favorite_win_rate", "mean_queue_time"):
+        assert metric in res.history
+        assert np.isfinite(res.summary()[metric])
+    assert res.summary()["prediction_log_loss"] >= 0
+    assert 0 <= res.summary()["favorite_win_rate"] <= 1
+    assert res.summary()["mean_queue_time"] >= 0
+
+
 def test_settling_time_bookkeeping():
     cfg = SMALL.with_(outcome_mode="expected", matchmaking="random", n_ticks=2000)
     res = run_simulation(Elo(k=32), cfg)
@@ -99,6 +110,15 @@ def test_metric_helpers():
     assert np.isnan(spearman(np.ones(4), x))
     assert unfairness(np.array([0.5, 0.5])) == 0
     assert unfairness(np.array([1.0, 0.0])) == 0.5
+
+
+def test_kaplan_meier_median_respects_right_censoring():
+    from matchsim.metrics import kaplan_meier_median
+
+    assert kaplan_meier_median(np.array([1, 2, 3, 4]),
+                               np.array([True, True, False, False])) == 2.0
+    assert np.isnan(kaplan_meier_median(
+        np.array([1, 2]), np.array([False, False])))
 
 
 def test_replicates_and_paired_ci():

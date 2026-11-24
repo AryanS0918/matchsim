@@ -46,7 +46,13 @@ class SimulationResult:
 
     def summary(self) -> dict:
         h = self.history.iloc[-1]
-        st = self.settle_game[self.settled]
+        def weighted_history_mean(column: str) -> float:
+            valid = self.history[column].notna() & (self.history["n_matches"] > 0)
+            if not valid.any():
+                return float("nan")
+            return float(np.average(self.history.loc[valid, column],
+                                    weights=self.history.loc[valid, "n_matches"]))
+
         return {
             "system": self.system_name,
             "seed": self.config.seed,
@@ -54,11 +60,13 @@ class SimulationResult:
             "final_spearman": h["spearman"],
             "mean_unfairness": float(np.average(self.history["unfairness"].dropna(),
                                                 weights=self.history.loc[self.history["unfairness"].notna(), "n_matches"])),
-            # Naive median over settled players only. Censoring biases it down;
-            # use Kaplan-Meier on (settle_game, settled) for the real analysis.
-            "median_games_to_settle": float(np.median(st)) if st.size else float("nan"),
+            "median_games_to_settle": metrics.kaplan_meier_median(
+                self.settle_game, self.settled),
             "share_settled": float(self.settled.mean()),
             "games_per_player": float(self.games.mean()),
+            "prediction_log_loss": weighted_history_mean("prediction_log_loss"),
+            "favorite_win_rate": weighted_history_mean("favorite_win_rate"),
+            "mean_queue_time": weighted_history_mean("mean_queue_time"),
         }
 
 
@@ -86,10 +94,17 @@ def run_simulation(system: RatingSystem, config: SimConfig,
     rows: list[dict] = []
     match_log: list[pd.DataFrame] = []
     window_p: list[np.ndarray] = []
+    window_log_loss: list[np.ndarray] = []
+    window_favorite_score: list[np.ndarray] = []
+    window_queue_time: list[np.ndarray] = []
 
     def snapshot(tick: int) -> None:
         r = system.ratings
         p = np.concatenate(window_p) if window_p else np.empty(0)
+        log_loss = np.concatenate(window_log_loss) if window_log_loss else np.empty(0)
+        favorite_score = (np.concatenate(window_favorite_score)
+                          if window_favorite_score else np.empty(0))
+        queue_time = np.concatenate(window_queue_time) if window_queue_time else np.empty(0)
         rows.append({
             "tick": tick,
             "games_per_player": float(games.mean()),
@@ -100,8 +115,16 @@ def run_simulation(system: RatingSystem, config: SimConfig,
             "n_matches": int(p.size),
             "queue_size": int(in_queue.sum()),
             "mean_wait_queued": float(wait[in_queue].mean()) if in_queue.any() else 0.0,
+            "prediction_log_loss": float(log_loss.mean()) if log_loss.size else float("nan"),
+            "favorite_win_rate": (float(favorite_score.mean())
+                                  if favorite_score.size else float("nan")),
+            "mean_queue_time": (float(queue_time.mean())
+                                if queue_time.size else float("nan")),
         })
         window_p.clear()
+        window_log_loss.clear()
+        window_favorite_score.clear()
+        window_queue_time.clear()
 
     snapshot(0)
     for tick in range(1, config.n_ticks + 1):
@@ -122,6 +145,17 @@ def run_simulation(system: RatingSystem, config: SimConfig,
             p_true = win_probability(eff_a, eff_b, config.logistic_scale)
             p_pred = system.predict(a, b)
             score_a = sample_scores(p_true, outcome_rng, config.outcome_mode)
+
+            clipped_prediction = np.clip(p_pred, 1e-15, 1.0 - 1e-15)
+            window_log_loss.append(
+                -(score_a * np.log(clipped_prediction) +
+                  (1.0 - score_a) * np.log1p(-clipped_prediction))
+            )
+            window_favorite_score.append(np.where(
+                p_pred > 0.5, score_a,
+                np.where(p_pred < 0.5, 1.0 - score_a, 0.5),
+            ))
+            window_queue_time.append(np.concatenate((wait[a], wait[b])).astype(float))
 
             # 4. rating update
             system.update(a, b, score_a)
@@ -154,6 +188,10 @@ def run_simulation(system: RatingSystem, config: SimConfig,
 
             in_queue[players] = False
             wait[players] = 0
+
+        # Empty periods let Glicko-2 account for inactivity.
+        if not a.size:
+            system.update(a, b, np.empty(0))
 
         # 5. everyone still queued waits longer
         wait[in_queue] += 1

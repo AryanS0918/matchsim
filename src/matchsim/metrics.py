@@ -59,3 +59,24 @@ def games_to_threshold(history: pd.DataFrame, threshold: float,
     """
     hit = history.loc[history[metric] <= threshold]
     return float(hit["games_per_player"].iloc[0]) if len(hit) else float("nan")
+
+
+def kaplan_meier_median(times: np.ndarray, events: np.ndarray) -> float:
+    """Estimate the median event time with right-censored observations."""
+    times = np.asarray(times, dtype=float)
+    events = np.asarray(events, dtype=bool)
+    if times.ndim != 1 or events.ndim != 1 or times.size != events.size:
+        raise ValueError("times and events must be one-dimensional arrays of equal size")
+    if np.any(~np.isfinite(times)) or np.any(times < 0):
+        raise ValueError("times must be finite and non-negative")
+    if times.size == 0:
+        return float("nan")
+
+    survival = 1.0
+    for time in np.unique(times[events]):
+        at_risk = np.count_nonzero(times >= time)
+        observed_events = np.count_nonzero((times == time) & events)
+        survival *= 1.0 - observed_events / at_risk
+        if survival <= 0.5:
+            return float(time)
+    return float("nan")
