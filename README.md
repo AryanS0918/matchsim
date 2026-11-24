@@ -1,5 +1,7 @@
 # matchsim — Elo vs Glicko-2 in a simulated ranked queue
 
+[![tests](https://github.com/AryanS0918/matchsim/actions/workflows/tests.yml/badge.svg)](https://github.com/AryanS0918/matchsim/actions/workflows/tests.yml)
+
 > **Status: step 1 of 5** (Elo, the matchmaking loop and tests). Glicko-2,
 > smurfs, tilt, churn and the full experiment analysis are still to come.
 > Everything in this repository is a **simulation**. No real player data is used.
