@@ -2,8 +2,7 @@
 
 [![tests](https://github.com/AryanS0918/matchsim/actions/workflows/tests.yml/badge.svg)](https://github.com/AryanS0918/matchsim/actions/workflows/tests.yml)
 
-> **Status: step 5 of 5** (The rating models and full confirmatory analysis are
-> implemented. Smurf and tilt extensions remain future work.)
+> **Core analysis complete (H1 to H3 and H7).** H4 to H6 are future work.
 > Everything in this repository is a **simulation**. No real player data is used.
 
 ## Question
@@ -111,6 +110,12 @@ t-intervals and Holm correction within the H1/H2 contrast family.
 - **H3 — Supported qualitatively.** Nearest-pairing compresses the Elo rating
   scale: 10,000-player noiseless RMSE was 231.73 while Spearman rank correlation
   remained 0.9999985. This is the mismatch described by H3.
+- **Glicko-2 integration sanity check — Passed.** With noiseless outcomes and
+  random pairing, Glicko-2 reaches centred RMSE **9.53** and Spearman
+  **0.999996** at 400 players and 2,000 ticks. The implementation recovers the
+  true ordering and scale rather than showing a failed integration. The larger
+  nearest-pairing RMSE result is therefore queue/algorithm behaviour, with this
+  implementation also using one simulation tick as a rating period.
 - **H4 — Not tested.** Fairness buckets and the 20-game/100-game transition
   require separate event-history analysis and are still pending.
 - **H5 — Not tested.** The smurf mechanism and smurf-only survival outcomes are

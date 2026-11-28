@@ -7,9 +7,6 @@ import numpy as np
 from matchsim.ratings.base import RatingSystem
 
 _SCALE = 173.7178
-_Q = np.log(10.0) / 400.0
-
-
 class Glicko2(RatingSystem):
     """Glicko-2 with one rating period per simulation tick."""
 
@@ -128,5 +125,7 @@ class Glicko2(RatingSystem):
         played[a] = True
         played[b] = True
         idle = ~played
-        self.rd[idle] = np.sqrt(self.rd[idle] ** 2 +
-                                (_SCALE * self.volatilities[idle]) ** 2)
+        idle_phi = np.sqrt(
+            (self.rd[idle] / _SCALE) ** 2 + self.volatilities[idle] ** 2
+        )
+        self.rd[idle] = idle_phi * _SCALE

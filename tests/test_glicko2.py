@@ -1,6 +1,7 @@
 import numpy as np
 import pytest
 
+from matchsim import SimConfig, run_simulation
 from matchsim.ratings import Glicko2
 
 
@@ -26,6 +27,22 @@ def test_idle_rating_deviation_grows_during_empty_period():
                   np.array([], dtype=float))
     assert np.all(system.rd > 350)
     np.testing.assert_array_equal(system.ratings, np.full(2, 1500.0))
+
+
+def test_noiseless_random_pairing_recover_true_skill():
+    result = run_simulation(
+        Glicko2(tau=0.6),
+        SimConfig(
+            n_players=400,
+            n_ticks=2000,
+            record_every=20,
+            outcome_mode="expected",
+            matchmaking="random",
+            seed=7,
+        ),
+    )
+    assert result.history["rmse_centred"].iloc[-1] < 10
+    assert result.history["spearman"].iloc[-1] > 0.999
 
 
 def test_rejects_scores_outside_probability_range():
