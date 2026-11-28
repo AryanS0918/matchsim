@@ -157,9 +157,6 @@ def run_simulation(system: RatingSystem, config: SimConfig,
             ))
             window_queue_time.append(np.concatenate((wait[a], wait[b])).astype(float))
 
-            # 4. rating update
-            system.update(a, b, score_a)
-
             # bookkeeping
             games[a] += 1
             games[b] += 1
@@ -189,9 +186,8 @@ def run_simulation(system: RatingSystem, config: SimConfig,
             in_queue[players] = False
             wait[players] = 0
 
-        # Empty periods let Glicko-2 account for inactivity.
-        if not a.size:
-            system.update(a, b, np.empty(0))
+        # 4. rating update; empty periods let Glicko-2 account for inactivity.
+        system.update(a, b, score_a if a.size else np.empty(0))
 
         # 5. everyone still queued waits longer
         wait[in_queue] += 1

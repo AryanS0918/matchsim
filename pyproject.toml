@@ -15,7 +15,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = ["pytest>=7"]
+dev = ["pytest>=7", "lifelines>=0.27", "matplotlib>=3.7"]
 analysis = ["matplotlib>=3.7", "lifelines>=0.27", "jupyter"]
 
 [tool.setuptools.packages.find]

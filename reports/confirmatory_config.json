@@ -1,0 +1,56 @@
+{
+  "config": {
+    "n_players": 2000,
+    "skill_mean": 1500.0,
+    "skill_sd": 250.0,
+    "logistic_scale": 400.0,
+    "outcome_mode": "sampled",
+    "n_ticks": 500,
+    "queue_prob": 0.3,
+    "matchmaking": "nearest",
+    "window_base": 50.0,
+    "window_growth": 25.0,
+    "window_max": 600.0,
+    "record_every": 10,
+    "converge_eps": 100.0,
+    "seed": 0
+  },
+  "seeds": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19
+  ],
+  "fixed_k": [
+    8,
+    16,
+    24,
+    32,
+    48,
+    64
+  ],
+  "taus": [
+    0.3,
+    0.6,
+    1.2
+  ],
+  "holm_family": "H1/H2 primary paired contrasts",
+  "sesoi_rmse": 5.0,
+  "sesoi_games": 5.0
+}

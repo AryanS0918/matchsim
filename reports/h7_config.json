@@ -1,0 +1,52 @@
+{
+  "config": {
+    "n_players": 2000,
+    "skill_mean": 1500.0,
+    "skill_sd": 250.0,
+    "logistic_scale": 400.0,
+    "outcome_mode": "sampled",
+    "n_ticks": 500,
+    "queue_prob": 0.3,
+    "matchmaking": "nearest",
+    "window_base": 50.0,
+    "window_growth": 25.0,
+    "window_max": 600.0,
+    "record_every": 10,
+    "converge_eps": 100.0,
+    "seed": 0
+  },
+  "seeds": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19
+  ],
+  "arms": [
+    "elo_k32",
+    "elo_decay",
+    "glicko2"
+  ],
+  "churn_thresholds_consecutive_losses": [
+    3,
+    5,
+    8
+  ],
+  "reference_arm": "elo_k32",
+  "clustered_by_seed": true
+}
